@@ -1,0 +1,226 @@
+import numpy as np
+import pandas as pd
+from typing import Dict, List, Tuple
+import random
+import json
+
+class AdvancedIQTest:
+    def __init__(self):
+        # Intelligence Categories
+        self.intelligence_categories = {
+            'logical_reasoning': {
+                'weight': 0.25,
+                'question_types': [
+                    'syllogisms',
+                    'logical_sequences',
+                    'pattern_recognition',
+                    'deductive_reasoning'
+                ]
+            },
+            'spatial_intelligence': {
+                'weight': 0.15,
+                'question_types': [
+                    '3d_rotation',
+                    'spatial_visualization',
+                    'mental_manipulation',
+                    'geometric_reasoning'
+                ]
+            },
+            'mathematical_reasoning': {
+                'weight': 0.20,
+                'question_types': [
+                    'numerical_series',
+                    'abstract_calculations',
+                    'mathematical_logic',
+                    'complex_problem_solving'
+                ]
+            },
+            'linguistic_intelligence': {
+                'weight': 0.15,
+                'question_types': [
+                    'word_analogies',
+                    'semantic_reasoning',
+                    'linguistic_manipulation',
+                    'verbal_comprehension'
+                ]
+            },
+            'abstract_thinking': {
+                'weight': 0.15,
+                'question_types': [
+                    'conceptual_reasoning',
+                    'metaphorical_understanding',
+                    'complex_pattern_recognition',
+                    'theoretical_problem_solving'
+                ]
+            }
+        }
+        
+        # Question Bank
+        self.question_bank = self._generate_question_bank()
+        
+    def _generate_question_bank(self) -> Dict[str, List[Dict]]:
+        """Generate a comprehensive question bank for IQ assessment."""
+        question_bank = {}
+        
+        # Logical Reasoning Questions
+        question_bank['logical_reasoning'] = [
+            {
+                'type': 'syllogism',
+                'question': 'All scientists are curious. Some curious people are artists. What can be concluded?',
+                'options': [
+                    'Some scientists are artists',
+                    'No scientists are artists',
+                    'All artists are scientists',
+                    'Cannot be determined'
+                ],
+                'correct_answer': 0,
+                'difficulty': 0.7
+            },
+            {
+                'type': 'sequence',
+                'question': 'What is the next number in the sequence: 2, 6, 12, 20, ?',
+                'options': ['30', '28', '26', '24'],
+                'correct_answer': 1,
+                'difficulty': 0.6
+            }
+        ]
+        
+        # Spatial Intelligence Questions
+        question_bank['spatial_intelligence'] = [
+            {
+                'type': '3d_rotation',
+                'question': 'Imagine a cube with different colors on each side. If rotated 90 degrees, which side would be visible?',
+                'image_required': True,
+                'options': ['Red', 'Blue', 'Green', 'Yellow'],
+                'correct_answer': 2,
+                'difficulty': 0.8
+            }
+        ]
+        
+        # Mathematical Reasoning Questions
+        question_bank['mathematical_reasoning'] = [
+            {
+                'type': 'numerical_series',
+                'question': 'Complete the series: 1, 4, 9, 16, ?',
+                'options': ['20', '25', '36', '49'],
+                'correct_answer': 3,
+                'difficulty': 0.7
+            }
+        ]
+        
+        # Linguistic Intelligence Questions
+        question_bank['linguistic_intelligence'] = [
+            {
+                'type': 'word_analogy',
+                'question': 'Writer is to book as sculptor is to:',
+                'options': ['paint', 'statue', 'canvas', 'chisel'],
+                'correct_answer': 1,
+                'difficulty': 0.6
+            }
+        ]
+        
+        # Abstract Thinking Questions
+        question_bank['abstract_thinking'] = [
+            {
+                'type': 'conceptual_reasoning',
+                'question': 'What concept connects "tree", "river", and "mountain"?',
+                'options': [
+                    'Natural elements', 
+                    'Large objects', 
+                    'Geographical features', 
+                    'Immovable objects'
+                ],
+                'correct_answer': 0,
+                'difficulty': 0.7
+            }
+        ]
+        
+        return question_bank
+    
+    def generate_test(self, num_questions: int = 50) -> List[Dict]:
+        """Generate a personalized IQ test."""
+        test_questions = []
+        
+        for category, details in self.intelligence_categories.items():
+            category_questions = self.question_bank[category]
+            questions_per_category = int(num_questions * details['weight'])
+            
+            selected_questions = random.sample(
+                category_questions, 
+                min(questions_per_category, len(category_questions))
+            )
+            test_questions.extend(selected_questions)
+        
+        random.shuffle(test_questions)
+        return test_questions[:num_questions]
+    
+    def calculate_iq_score(self, test_results: List[bool]) -> Dict:
+        """Calculate IQ score based on test performance."""
+        total_questions = len(test_results)
+        correct_answers = sum(test_results)
+        
+        # Basic IQ calculation
+        raw_score = (correct_answers / total_questions) * 100
+        
+        # Standardized IQ distribution
+        iq_score = 100 + (raw_score * 0.5)
+        
+        # Detailed performance breakdown
+        performance_categories = {
+            'overall_intelligence': iq_score,
+            'category_performance': self._calculate_category_performance(test_results)
+        }
+        
+        return performance_categories
+    
+    def _calculate_category_performance(self, test_results: List[bool]) -> Dict:
+        """Calculate performance across different intelligence categories."""
+        category_performance = {}
+        current_index = 0
+        
+        for category, details in self.intelligence_categories.items():
+            category_questions = self.question_bank[category]
+            num_category_questions = int(len(test_results) * details['weight'])
+            
+            category_results = test_results[
+                current_index:current_index + num_category_questions
+            ]
+            
+            category_performance[category] = {
+                'correct_percentage': sum(category_results) / len(category_results) * 100,
+                'strengths': self._identify_strengths(category, category_results)
+            }
+            
+            current_index += num_category_questions
+        
+        return category_performance
+    
+    def _identify_strengths(self, category: str, results: List[bool]) -> List[str]:
+        """Identify specific strengths within a category."""
+        strengths = []
+        question_types = self.intelligence_categories[category]['question_types']
+        
+        for qtype in question_types:
+            type_performance = [
+                r for r, q in zip(results, self.question_bank[category])
+                if q['type'] == qtype
+            ]
+            
+            if type_performance and sum(type_performance) / len(type_performance) > 0.7:
+                strengths.append(qtype)
+        
+        return strengths
+
+# Example usage
+if __name__ == "__main__":
+    iq_test = AdvancedIQTest()
+    
+    # Generate a test
+    test_questions = iq_test.generate_test()
+    
+    # Simulate test taking (placeholder)
+    test_results = [random.choice([True, False]) for _ in test_questions]
+    
+    # Calculate results
+    iq_results = iq_test.calculate_iq_score(test_results)
+    print(json.dumps(iq_results, indent=2))
